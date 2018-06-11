@@ -16,21 +16,32 @@ elif hash open &>/dev/null; then
 fi
 
 content="$(tmux capture-pane -J -p)"
-urls=($(echo "$content" |grep -oE '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'))
-wwws=($(echo "$content" |grep -oE '[a-zA-Z](-?[a-zA-Z0-9])+\.[a-zA-Z]{2,}(/\S+)*'                  |sed 's/^\(.*\)$/https:\/\/\1/'))
-ips=($(echo  "$content" |grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?(/\S+)*' |sed 's/^\(.*\)$/https:\/\/\1/'))
+urls=($(echo "$content" |
+  rg -o -N 'https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'))
+wwws=($(echo "$content" |
+  rg -o -N -e '(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)' \
+           -e '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?(/\S+)*' --replace 'https://$0'))
+
+# Ends up being n log n
+containsElement () {
+    local e match="$1"
+    shift
+    for e; do [[ "${e//'https://'}" == "${match//'http://'}" ]] && return 0; done
+    return 1
+}
 
 merge() {
+    local idx=2
     for item in "$@" ; do
-        echo "$item"
+        containsElement "$item" "${@:$idx}" || echo "$item"
+        idx=$((idx+1))
     done
 }
 
-merge "${urls[@]}" "${wwws[@]}" "${ips[@]}"|
-    sort -u |
-    nl -w3 -s '  ' |
-    fzf_cmd |
-    awk '{print $2}'|
-    uniq -u |
+merge "${urls[@]}" "${wwws[@]}"  |
+    sort -u -f                   |
+    nl -w3 -s '  '               |
+    fzf_cmd                      |
+    awk '{print $2}'             |
     xargs -n1 -I {} $open_cmd {} &>/dev/null ||
     true
