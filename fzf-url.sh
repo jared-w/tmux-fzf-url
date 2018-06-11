@@ -17,8 +17,8 @@ fi
 
 content="$(tmux capture-pane -J -p)"
 urls=($(echo "$content" |grep -oE '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'))
-wwws=($(echo "$content" |grep -oE 'www\.[a-zA-Z](-?[a-zA-Z0-9])+\.[a-zA-Z]{2,}(/\S+)*'                  |sed 's/^\(.*\)$/http:\/\/\1/'))
-ips=($(echo  "$content" |grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?(/\S+)*' |sed 's/^\(.*\)$/http:\/\/\1/'))
+wwws=($(echo "$content" |grep -oE '[a-zA-Z](-?[a-zA-Z0-9])+\.[a-zA-Z]{2,}(/\S+)*'                  |sed 's/^\(.*\)$/https:\/\/\1/'))
+ips=($(echo  "$content" |grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?(/\S+)*' |sed 's/^\(.*\)$/https:\/\/\1/'))
 
 merge() {
     for item in "$@" ; do
@@ -31,5 +31,6 @@ merge "${urls[@]}" "${wwws[@]}" "${ips[@]}"|
     nl -w3 -s '  ' |
     fzf_cmd |
     awk '{print $2}'|
+    uniq -u |
     xargs -n1 -I {} $open_cmd {} &>/dev/null ||
     true
