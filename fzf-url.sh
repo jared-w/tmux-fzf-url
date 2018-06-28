@@ -21,7 +21,7 @@ urls=($(echo "$content" |
 wwws=($(echo "$content" |
   rg -o -N -e '(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)' \
            -e '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?(/\S+)*' --replace 'https://$0'))
-locals=($(echo "$content" | rg -o -N 'https?://\w+:\w+'))
+locals=($(echo "$content" | rg -o -N 'https?://\w+:\w+(/\w+)?'))
 
 # Ends up being n log n
 containsElement () {
